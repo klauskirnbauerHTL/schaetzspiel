@@ -9,7 +9,7 @@ Ein interaktives Web-Tippspiel zum Schätzen und Auswerten von Ergebnissen. Eine
 - 📊 Automatische Auswertung und Ranking
 - 📱 Vollständig responsive für Smartphones, Tablets und Desktop
 - 🔄 Sequentielle Bestätigung pro Person
-- 📥 JSON-Export der Spielerdaten
+- 📥 CSV-Export der Spielerdaten
 
 ## Nutzung
 
@@ -18,7 +18,8 @@ Ein interaktives Web-Tippspiel zum Schätzen und Auswerten von Ergebnissen. Eine
 3. Trage bis zu 5 Tipps ein
 4. Klicke "Bestätigen" - die nächste Person erscheint
 5. Wiederhole für alle Spieler
-6. Gib das Endergebnis unten ein und klicke "Tippspiel auswerten"
+6. Gib im Bereich "Ergebnis & Auswertung" das Endergebnis und die Ranking-Größe ein
+7. Klicke "Tippspiel auswerten" oder exportiere die Daten als CSV
 
 Die Daten werden automatisch gespeichert und auch nach Browser-Neustart erhalten.
 

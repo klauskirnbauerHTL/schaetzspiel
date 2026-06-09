@@ -481,17 +481,7 @@
         <h2>Tipps erfassen</h2>
 
         <div class="topbar">
-          <div>
-            <label for="storageKey"><strong>Speichername</strong></label>
-            <input id="storageKey" value="schaetzspiel-data" />
-          </div>
-          <div>
-            <label for="rankingSize"><strong>Ranking-Größe</strong></label>
-            <input id="rankingSize" type="number" min="1" value="10" />
-          </div>
           <div class="toolbar" style="align-items:end;margin:0">
-            <button class="btn secondary" id="saveBtn">Speichern</button>
-            <button class="btn secondary" id="loadBtn">Laden</button>
             <button class="btn danger" id="resetBtn">Löschen</button>
           </div>
         </div>
@@ -520,12 +510,16 @@
             <label for="result"><strong>Ergebnis</strong></label>
             <input id="result" type="number" step="any" placeholder="Endergebnis eingeben" />
           </div>
+          <div>
+            <label for="rankingSize"><strong>Ranking-Größe</strong></label>
+            <input id="rankingSize" type="number" min="1" value="10" />
+          </div>
 
         </div>
 
         <div class="toolbar">
           <button class="btn" id="evaluateBtn">Tippspiel auswerten</button>
-          <button class="btn secondary" id="exportBtn">JSON exportieren</button>
+          <button class="btn secondary" id="exportBtn">CSV exportieren</button>
         </div>
 
         <div class="status" id="statusBox">Noch keine Auswertung.</div>
@@ -537,7 +531,6 @@
   <script>
     const STORAGE_DEFAULT = 'schaetzspiel-data';
 
-    const storageKeyEl = document.getElementById('storageKey');
     const rankingSizeEl = document.getElementById('rankingSize');
     const resultEl = document.getElementById('result');
     const statusBox = document.getElementById('statusBox');
@@ -586,10 +579,6 @@
         confirmed: !!row.confirmed
       })) : [];
       return base;
-    }
-
-    function getStorageKey(){
-      return storageKeyEl.value.trim() || STORAGE_DEFAULT;
     }
 
     function getActiveRowIndex(){
@@ -815,19 +804,14 @@
     }
 
     function autoSave(){
-      localStorage.setItem(getStorageKey(), JSON.stringify({
+      localStorage.setItem(STORAGE_DEFAULT, JSON.stringify({
         guesses: state.guesses,
         result: state.result
       }));
     }
 
-    function save(){
-      autoSave();
-      statusBox.innerHTML = '<span class="ok">Gespeichert.</span>';
-    }
-
     function load(){
-      const raw = localStorage.getItem(getStorageKey());
+      const raw = localStorage.getItem(STORAGE_DEFAULT);
       if(!raw){
         statusBox.innerHTML = '<span class="bad">Keine gespeicherten Daten gefunden.</span>';
         return;
@@ -854,7 +838,7 @@
       renderHistory();
       rankingContainer.innerHTML = '';
       statusBox.textContent = 'Zurückgesetzt.';
-      localStorage.removeItem(getStorageKey());
+      localStorage.removeItem(STORAGE_DEFAULT);
     }
 
     function evaluate(){
@@ -914,27 +898,39 @@
         </table>
       `;
 
-      save();
+      autoSave();
     }
 
-    function exportJson(){
-      const blob = new Blob([JSON.stringify({
-        guesses: state.guesses,
-        result: state.result
-      }, null, 2)], {type:'application/json'});
+    function exportCsv(){
+      const rows = collectRows();
+      const headers = ['Person', 'Tipp 1', 'Tipp 2', 'Tipp 3', 'Tipp 4', 'Tipp 5'];
+      const csvEscape = (value) => {
+        const str = String(value ?? '');
+        return /[";,\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+      };
+
+      const body = rows.map(row => {
+        const tips = Array.from({length: tipCount}, (_, i) => row.tips[i] ?? '');
+        return [row.person, ...tips].map(csvEscape).join(';');
+      });
+
+      const resultLine = state.result !== null && state.result !== ''
+        ? ['', '', '', '', '', `Ergebnis: ${state.result}`].map(csvEscape).join(';')
+        : null;
+
+      const csvContent = [headers.join(';'), ...body, ...(resultLine ? [resultLine] : [])].join('\n');
+      const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
 
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
-      a.download = 'schaetzspiel.json';
+      a.download = 'schaetzspiel.csv';
       a.click();
       URL.revokeObjectURL(a.href);
     }
 
-    document.getElementById('saveBtn').onclick = save;
-    document.getElementById('loadBtn').onclick = load;
     document.getElementById('resetBtn').onclick = resetAll;
     document.getElementById('evaluateBtn').onclick = evaluate;
-    document.getElementById('exportBtn').onclick = exportJson;
+    document.getElementById('exportBtn').onclick = exportCsv;
 
     resultEl.addEventListener('input', () => {
       state.result = resultEl.value;
@@ -942,10 +938,6 @@
     });
 
     rankingSizeEl.addEventListener('change', () => {
-      autoSave();
-    });
-
-    storageKeyEl.addEventListener('change', () => {
       autoSave();
     });
 
