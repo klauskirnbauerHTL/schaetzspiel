@@ -8,11 +8,16 @@ const guessRowsEl = document.getElementById('guessRows');
 const historyContainer = document.getElementById('historyContainer');
 
 const tipCount = 5;
+const HISTORY_PAGE_SIZE_DEFAULT = 8;
+const HISTORY_PAGE_SIZE_OPTIONS = [8, 15, 25];
 
 let state = {
   guesses: [],
   result: null
 };
+
+let historyPage = 1;
+let historyPageSize = HISTORY_PAGE_SIZE_DEFAULT;
 
 function safeNumber(v){
   const raw = String(v).trim();
@@ -34,7 +39,8 @@ function defaultRow(i){
   return {
     person: '',
     tips: Array.from({length: tipCount}, () => ''),
-    confirmed: false
+    confirmed: false,
+    confirmedAt: null
   };
 }
 
@@ -45,9 +51,23 @@ function normalizeState(raw){
   base.guesses = Array.isArray(raw.guesses) ? raw.guesses.map(row => ({
     person: row.person || '',
     tips: Array.isArray(row.tips) ? [...row.tips, ...Array.from({length: Math.max(0, tipCount - row.tips.length)}, () => '')].slice(0, tipCount) : Array.from({length: tipCount}, () => ''),
-    confirmed: !!row.confirmed
+    confirmed: !!row.confirmed,
+    confirmedAt: row.confirmedAt || null
   })) : [];
   return base;
+}
+
+function formatTimestamp(iso){
+  if(!iso) return 'Zeitpunkt unbekannt';
+  const d = new Date(iso);
+  if(Number.isNaN(d.getTime())) return 'Zeitpunkt unbekannt';
+  return d.toLocaleString('de-AT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 function getActiveRowIndex(){
@@ -125,6 +145,7 @@ function confirmRow(index){
     return;
   }
   row.confirmed = true;
+  row.confirmedAt = row.confirmedAt || new Date().toISOString();
   state.guesses[index] = row;
   autoSave();
   renderRows();
@@ -133,41 +154,6 @@ function confirmRow(index){
 
 function getHistoryRows(){
   return state.guesses.map((row, index) => ({row, index})).filter(item => item.row.confirmed);
-}
-
-function startEditRow(index){
-  const row = state.guesses[index];
-  if(!row) return;
-  row.editing = true;
-  row.editBuffer = {
-    person: row.person,
-    tips: [...row.tips]
-  };
-  renderHistory();
-}
-
-function cancelEditRow(index){
-  const row = state.guesses[index];
-  if(!row) return;
-  row.editing = false;
-  delete row.editBuffer;
-  renderHistory();
-}
-
-function saveEditRow(index){
-  const row = state.guesses[index];
-  if(!row || !row.editBuffer) return;
-  if(!validateRow(row.editBuffer)){
-    alert('Bitte gib einen Namen und mindestens einen Tipp ein.');
-    return;
-  }
-  row.person = row.editBuffer.person.trim();
-  row.tips = [...row.editBuffer.tips];
-  row.editing = false;
-  delete row.editBuffer;
-  autoSave();
-  renderRows();
-  renderHistory();
 }
 
 function deleteRow(index){
@@ -186,34 +172,22 @@ function renderHistory(){
     return;
   }
 
-  historyContainer.innerHTML = entries.map(({row, index}) => {
-    if(row.editing){
-      return `
-        <div class="history-item">
-          <div class="history-head">
-            <div class="history-title">Bearbeite Eintrag</div>
-          </div>
-          <div class="history-edit">
-            <label>Name<br><input data-index="${index}" data-field="person" value="${escapeHtml(row.editBuffer.person)}"></label>
-            ${row.editBuffer.tips.map((tip, tipIndex) => `
-              <label>Tipp ${tipIndex + 1}<br><input data-index="${index}" data-field="editTip${tipIndex}" type="number" step="any" value="${escapeHtml(tip)}"></label>
-            `).join('')}
-          </div>
-          <div class="history-controls">
-            <button class="btn secondary" data-action="save" data-index="${index}">Speichern</button>
-            <button class="btn secondary" data-action="cancel" data-index="${index}">Abbrechen</button>
-            <button class="btn danger" data-action="delete" data-index="${index}">Löschen</button>
-          </div>
-        </div>
-      `;
-    }
+  const totalPages = Math.max(1, Math.ceil(entries.length / historyPageSize));
+  if(historyPage > totalPages) historyPage = totalPages;
+  if(historyPage < 1) historyPage = 1;
 
+  const start = (historyPage - 1) * historyPageSize;
+  const pageEntries = entries.slice(start, start + historyPageSize);
+
+  const itemsHtml = pageEntries.map(({row, index}) => {
     return `
       <div class="history-item">
         <div class="history-head">
-          <div class="history-title">${escapeHtml(row.person)}</div>
+          <div>
+            <div class="history-title">${escapeHtml(row.person)}</div>
+            <div class="history-time">${escapeHtml(formatTimestamp(row.confirmedAt))}</div>
+          </div>
           <div class="history-controls">
-            <button class="btn secondary" data-action="edit" data-index="${index}">Bearbeiten</button>
             <button class="btn danger" data-action="delete" data-index="${index}">Löschen</button>
           </div>
         </div>
@@ -224,32 +198,61 @@ function renderHistory(){
     `;
   }).join('');
 
+  const sizeOptionsHtml = HISTORY_PAGE_SIZE_OPTIONS.map(size => `
+    <option value="${size}" ${size === historyPageSize ? 'selected' : ''}>${size}</option>
+  `).join('');
+
+  const paginationHtml = totalPages > 1
+    ? `
+      <div class="history-pagination">
+        <div class="history-page-size">
+          <label for="historyPageSize">Pro Seite</label>
+          <select id="historyPageSize" data-history-size>${sizeOptionsHtml}</select>
+        </div>
+        <button class="btn secondary" data-history-nav="prev" ${historyPage === 1 ? 'disabled' : ''}>Zurück</button>
+        <div class="history-page-info">Seite ${historyPage} von ${totalPages}</div>
+        <button class="btn secondary" data-history-nav="next" ${historyPage === totalPages ? 'disabled' : ''}>Weiter</button>
+      </div>
+    `
+    : `
+      <div class="history-pagination">
+        <div class="history-page-size">
+          <label for="historyPageSize">Pro Seite</label>
+          <select id="historyPageSize" data-history-size>${sizeOptionsHtml}</select>
+        </div>
+        <div class="history-page-info">${entries.length} Einträge</div>
+      </div>
+    `;
+
+  historyContainer.innerHTML = `${itemsHtml}${paginationHtml}`;
+
   historyContainer.querySelectorAll('button[data-action]').forEach(button => {
     const action = button.dataset.action;
     const index = Number(button.dataset.index);
     button.addEventListener('click', () => {
-      if(action === 'edit') startEditRow(index);
       if(action === 'delete') deleteRow(index);
-      if(action === 'save') saveEditRow(index);
-      if(action === 'cancel') cancelEditRow(index);
     });
   });
 
-  historyContainer.querySelectorAll('input').forEach(input => {
-    input.addEventListener('input', () => {
-      const index = Number(input.dataset.index);
-      const field = input.dataset.field;
-      const row = state.guesses[index];
-      if(!row || !row.editBuffer) return;
-
-      if(field === 'person'){
-        row.editBuffer.person = input.value;
-      } else if(field.startsWith('editTip')){
-        const tipIndex = Number(field.slice(7));
-        row.editBuffer.tips[tipIndex] = input.value;
-      }
+  historyContainer.querySelectorAll('button[data-history-nav]').forEach(button => {
+    const direction = button.dataset.historyNav;
+    button.addEventListener('click', () => {
+      if(direction === 'prev' && historyPage > 1) historyPage -= 1;
+      if(direction === 'next' && historyPage < totalPages) historyPage += 1;
+      renderHistory();
     });
   });
+
+  const pageSizeSelect = historyContainer.querySelector('select[data-history-size]');
+  if(pageSizeSelect){
+    pageSizeSelect.addEventListener('change', () => {
+      const nextSize = Number(pageSizeSelect.value);
+      historyPageSize = HISTORY_PAGE_SIZE_OPTIONS.includes(nextSize) ? nextSize : HISTORY_PAGE_SIZE_DEFAULT;
+      historyPage = 1;
+      renderHistory();
+    });
+  }
+
 }
 
 function collectRows(){
@@ -314,7 +317,6 @@ function buildRanking(result, size){
   const ranked = collectRows()
     .flatMap(g => g.tips.map((tip, tipIndex) => ({
       person: g.person,
-      label: `Tipp ${tipIndex + 1}`,
       value: tip,
       diff: Math.abs(tip - result)
     })))
@@ -349,7 +351,6 @@ function evaluate(){
         <tr>
           <th>Platz</th>
           <th>Person</th>
-          <th>Tipp</th>
           <th>Wert</th>
           <th>Abweichung</th>
         </tr>
@@ -361,12 +362,11 @@ function evaluate(){
                 <tr>
                   <td>${i + 1}</td>
                   <td>${escapeHtml(r.person)}</td>
-                  <td>${escapeHtml(r.label)}</td>
                   <td>${r.value}</td>
                   <td>${r.diff}</td>
                 </tr>
               `).join('')
-            : '<tr><td colspan="5" class="muted">Keine Tipps vorhanden.</td></tr>'
+            : '<tr><td colspan="4" class="muted">Keine Tipps vorhanden.</td></tr>'
         }
       </tbody>
     </table>
@@ -384,7 +384,7 @@ function exportCsv(){
 
   const size = Math.max(1, parseInt(rankingSizeEl.value || '10', 10));
   const ranking = buildRanking(result, size);
-  const headers = ['Platz', 'Person', 'Tipp', 'Wert', 'Abweichung'];
+  const headers = ['Platz', 'Person', 'Wert', 'Abweichung'];
   const csvEscape = (value) => {
     const str = String(value ?? '');
     return /[";,\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
@@ -399,7 +399,6 @@ function exportCsv(){
   const body = ranking.top.map((entry, index) => [
     index + 1,
     entry.person,
-    entry.label,
     entry.value,
     entry.diff
   ].map(csvEscape).join(';'));
