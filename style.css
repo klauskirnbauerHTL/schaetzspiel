@@ -1,0 +1,465 @@
+:root{
+  --bg:#f7f7fb;
+  --card:#fff;
+  --text:#1f2430;
+  --muted:#667085;
+  --primary:#2563eb;
+  --border:#d0d5dd;
+  --ok:#067647;
+  --bad:#b42318;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+
+.wrap{
+  max-width:1200px;
+  margin:0 auto;
+  padding:24px;
+}
+
+h1{
+  margin:0 0 8px;
+  font-size:28px;
+}
+
+p{
+  margin:0 0 16px;
+  color:var(--muted);
+}
+
+.grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:16px;
+}
+
+.card{
+  flex:1 1 100%;
+  min-width:0;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+}
+
+@media(min-width:1100px){
+  .grid > .card:first-child{
+    flex:1 1 57%;
+  }
+
+  .grid > .card:nth-child(2){
+    flex:1 1 38%;
+  }
+}
+
+@media(max-width:1200px){
+  .grid > .card {
+    flex:1 1 100%;
+  }
+}
+
+h2{
+  margin:0 0 12px;
+  font-size:20px;
+}
+
+.toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:12px;
+  margin-bottom:12px;
+}
+
+.btn{
+  border:0;
+  border-radius:10px;
+  padding:10px 14px;
+  cursor:pointer;
+  font-weight:600;
+  font:inherit;
+  background:var(--primary);
+  color:#fff;
+}
+
+.btn.secondary{
+  background:#e5e7eb;
+  color:#111827;
+}
+
+.btn.danger{
+  background:#fee4e2;
+  color:#7a271a;
+}
+
+.table-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:12px;
+  min-width:100%;
+}
+
+th,td{
+  padding:10px 8px;
+  border-bottom:1px solid var(--border);
+  text-align:left;
+  vertical-align:top;
+}
+
+th, td {
+  white-space: nowrap;
+}
+
+@media(max-width:1200px){
+  .wrap{
+    padding:16px;
+  }
+
+  .card{
+    padding:14px;
+  }
+
+  .table-wrap{
+    margin-bottom:12px;
+  }
+
+  table{
+    min-width:auto;
+  }
+
+  th, td{
+    padding:8px 6px;
+  }
+
+  input{
+    padding:8px 10px;
+  }
+}
+
+@media(max-width:1200px){
+  .grid{
+    gap:12px;
+  }
+
+  .topbar{
+    gap:8px;
+  }
+
+  .toolbar{
+    gap:8px;
+  }
+
+  input{
+    padding:8px 10px;
+  }
+
+  button{
+    width:100%;
+  }
+
+  table{
+    border:0;
+    min-width:auto;
+  }
+
+  thead{
+    border:0;
+    clip: rect(0 0 0 0);
+    height:1px;
+    margin:-1px;
+    overflow:hidden;
+    padding:0;
+    position:absolute;
+    width:1px;
+  }
+
+  tbody, tr{
+    display:block;
+    width:100%;
+  }
+
+  tr{
+    margin-bottom:12px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:10px;
+  }
+
+  th, td{
+    white-space:normal;
+  }
+
+  td{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    padding:8px 0;
+    border:none;
+    border-bottom:1px solid var(--border);
+  }
+
+  td:last-child{
+    border-bottom:none;
+  }
+
+  td::before{
+    content: attr(data-label);
+    font-weight:700;
+    color:var(--muted);
+    flex:0 0 100%;
+    margin-bottom:8px;
+  }
+
+  td[data-label="Aktion"]{
+    display:block;
+  }
+
+  td[data-label="Aktion"] button{
+    width:100%;
+    margin-top:8px;
+  }
+
+  td input{
+    width:100%;
+    min-width:0;
+  }
+}
+
+/* Tip input grid for active row: 3 inputs on first line, 2 + confirm on second */
+.tip-grid{
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:8px;
+  align-items:center;
+}
+
+.tip-grid .tip-item input{
+  width:100%;
+  min-width:0;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:#fff;
+}
+
+.tip-grid .confirm-item{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+}
+
+.tip-grid .confirm-item .btn{
+  padding:10px 14px;
+}
+
+@media(max-width:640px){
+  .tip-grid{ grid-template-columns:1fr; }
+  .tip-grid .confirm-item{ justify-content:flex-start; }
+}
+
+th{
+  font-size:13px;
+  color:var(--muted);
+  background:#fafafa;
+}
+
+input,button{
+  font:inherit;
+}
+
+input{
+  width:100%;
+  min-width:120px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px 12px;
+  background:#fff;
+  color:var(--text);
+}
+
+input[type="number"]{
+  min-width:120px;
+}
+
+input:disabled{
+  background:#f4f5f7;
+  color:#6b7280;
+  cursor:not-allowed;
+}
+
+.status{
+  margin-top:12px;
+  padding:12px;
+  border-radius:12px;
+  background:#f9fafb;
+  border:1px solid var(--border);
+}
+
+.ok{color:var(--ok);font-weight:700}
+.bad{color:var(--bad);font-weight:700}
+.muted{color:var(--muted)}
+
+.chips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:8px;
+  margin-bottom:8px;
+}
+
+.chip{
+  padding:6px 10px;
+  background:#eef4ff;
+  border-radius:999px;
+  font-size:13px;
+}
+
+.topbar{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-bottom:12px;
+}
+
+@media(min-width:700px){
+  .topbar{
+    grid-template-columns:2fr 1fr 1fr;
+  }
+}
+
+.mini-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:10px;
+  margin-bottom:16px;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:1.3fr 1fr 1fr 1fr;
+  gap:8px;
+  align-items:end;
+  margin-bottom:8px;
+}
+
+.row.header{
+  font-size:13px;
+  color:var(--muted);
+  font-weight:700;
+  margin-bottom:6px;
+}
+
+.row .field label{
+  display:block;
+  font-size:13px;
+  font-weight:600;
+  margin-bottom:6px;
+}
+
+.row .field input{
+  padding:9px 10px;
+  border-radius:9px;
+}
+
+.row .field span{
+  display:block;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.legend{
+  margin-top:10px;
+  font-size:13px;
+  color:var(--muted);
+}
+
+.history-panel{
+  margin-top:18px;
+}
+
+.history-panel h3{
+  margin:0 0 10px;
+  font-size:17px;
+}
+
+.history-list{
+  display:grid;
+  gap:12px;
+}
+
+.history-item{
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:14px;
+  background:var(--card);
+}
+
+.history-head{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.history-title{
+  font-weight:700;
+  font-size:15px;
+}
+
+.history-tips{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.history-tip{
+  padding:6px 10px;
+  background:#eef4ff;
+  border-radius:999px;
+  font-size:13px;
+}
+
+.history-controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+
+.history-edit{
+  display:grid;
+  gap:8px;
+  margin-bottom:12px;
+}
+
+.history-edit input{
+  width:100%;
+  max-width:100%;
+}
+
+@media(max-width:640px){
+  .history-tips{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .history-controls button{
+    width:100%;
+  }
+}
