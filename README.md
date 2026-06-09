@@ -1,10 +1,10 @@
 # Schätzspiel
 
-Ein interaktives Web-Tippspiel zum Schätzen und Auswerten von Ergebnissen. Bis zu 10 Personen können je 5 Tipps eingeben, diese werden automatisch im Browser gespeichert und nach einem Endergebnis ausgewertet.
+Ein interaktives Web-Tippspiel zum Schätzen und Auswerten von Ergebnissen. Eine beliebige Anzahl von Personen kann je 5 Tipps eingeben, diese werden automatisch im Browser gespeichert und nach einem Endergebnis ausgewertet.
 
 ## Features
 
-- 🎯 Bis zu 10 Personen mit je max. 5 Tipps
+- 🎯 Beliebig viele Personen mit je max. 5 Tipps
 - 💾 Automatische Speicherung im Browser (localStorage)
 - 📊 Automatische Auswertung und Ranking
 - 📱 Vollständig responsive für Smartphones, Tablets und Desktop
