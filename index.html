@@ -246,6 +246,38 @@
       }
     }
 
+      /* Tip input grid for active row: 3 inputs on first line, 2 + confirm on second */
+      .tip-grid{
+        display:grid;
+        grid-template-columns:repeat(3, 1fr);
+        gap:8px;
+        align-items:center;
+      }
+
+      .tip-grid .tip-item input{
+        width:100%;
+        min-width:0;
+        padding:8px 10px;
+        border-radius:8px;
+        border:1px solid var(--border);
+        background:#fff;
+      }
+
+      .tip-grid .confirm-item{
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+      }
+
+      .tip-grid .confirm-item .btn{
+        padding:10px 14px;
+      }
+
+      @media(max-width:640px){
+        .tip-grid{ grid-template-columns:1fr; }
+        .tip-grid .confirm-item{ justify-content:flex-start; }
+      }
+
     th{
       font-size:13px;
       color:var(--muted);
@@ -595,13 +627,17 @@
           <td data-label="Person">
             <input data-index="${active}" data-field="person" placeholder="Name" value="${escapeHtml(g.person || '')}">
           </td>
-          ${Array.from({length: tipCount}, (_, tipIndex) => `
-            <td data-label="Tipp ${tipIndex + 1}">
-              <input data-index="${active}" data-field="tip${tipIndex}" type="number" step="any" placeholder="Tipp ${tipIndex + 1}" value="${escapeHtml(g.tips?.[tipIndex] ?? '')}">
-            </td>
-          `).join('')}
-          <td data-label="Aktion">
-            <button class="btn secondary" data-index="${active}">Bestätigen</button>
+          <td data-label="Tipps" colspan="5">
+            <div class="tip-grid">
+              ${Array.from({length: tipCount}, (_, tipIndex) => `
+                <div class="tip-item tip-${tipIndex}">
+                  <input data-index="${active}" data-field="tip${tipIndex}" type="number" step="any" placeholder="Tipp ${tipIndex + 1}" value="${escapeHtml(g.tips?.[tipIndex] ?? '')}">
+                </div>
+              `).join('')}
+              <div class="confirm-item">
+                <button class="btn secondary" data-index="${active}">Bestätigen</button>
+              </div>
+            </div>
           </td>
         </tr>
       `];
