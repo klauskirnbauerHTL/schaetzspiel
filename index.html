@@ -339,6 +339,83 @@
       font-size:13px;
       color:var(--muted);
     }
+
+    .history-panel{
+      margin-top:18px;
+    }
+
+    .history-panel h3{
+      margin:0 0 10px;
+      font-size:17px;
+    }
+
+    .history-list{
+      display:grid;
+      gap:12px;
+    }
+
+    .history-item{
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:14px;
+      background:var(--card);
+    }
+
+    .history-head{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .history-title{
+      font-weight:700;
+      font-size:15px;
+    }
+
+    .history-tips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    .history-tip{
+      padding:6px 10px;
+      background:#eef4ff;
+      border-radius:999px;
+      font-size:13px;
+    }
+
+    .history-controls{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .history-edit{
+      display:grid;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .history-edit input{
+      width:100%;
+      max-width:100%;
+    }
+
+    @media(max-width:640px){
+      .history-tips{
+        flex-direction:column;
+        align-items:flex-start;
+      }
+
+      .history-controls button{
+        width:100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -390,6 +467,11 @@
             <tbody id="guessRows"></tbody>
           </table>
         </div>
+
+        <div class="history-panel">
+          <h3>Verlauf</h3>
+          <div id="historyContainer" class="history-list"></div>
+        </div>
       </section>
 
       <section class="card">
@@ -423,6 +505,7 @@
     const statusBox = document.getElementById('statusBox');
     const rankingContainer = document.getElementById('rankingContainer');
     const guessRowsEl = document.getElementById('guessRows');
+    const historyContainer = document.getElementById('historyContainer');
 
     const rowCount = 10;
     const tipCount = 5;
@@ -525,6 +608,7 @@
           confirmRow(i);
         });
       });
+      renderHistory();
     }
 
     function validateRow(row){
@@ -543,6 +627,128 @@
       state.guesses[index] = row;
       autoSave();
       renderRows();
+      renderHistory();
+    }
+
+    function getHistoryRows(){
+      return state.guesses.map((row, index) => ({row, index})).filter(item => item.row.confirmed);
+    }
+
+    function startEditRow(index){
+      const row = state.guesses[index];
+      if(!row) return;
+      row.editing = true;
+      row.editBuffer = {
+        person: row.person,
+        tips: [...row.tips]
+      };
+      renderHistory();
+    }
+
+    function cancelEditRow(index){
+      const row = state.guesses[index];
+      if(!row) return;
+      row.editing = false;
+      delete row.editBuffer;
+      renderHistory();
+    }
+
+    function saveEditRow(index){
+      const row = state.guesses[index];
+      if(!row || !row.editBuffer) return;
+      if(!validateRow(row.editBuffer)){
+        alert('Bitte gib einen Namen und mindestens einen Tipp ein.');
+        return;
+      }
+      row.person = row.editBuffer.person.trim();
+      row.tips = [...row.editBuffer.tips];
+      row.editing = false;
+      delete row.editBuffer;
+      autoSave();
+      renderRows();
+      renderHistory();
+    }
+
+    function deleteRow(index){
+      if(!confirm('Diese Person wirklich löschen?')) return;
+      state.guesses.splice(index, 1);
+      autoSave();
+      renderRows();
+      renderHistory();
+    }
+
+    function renderHistory(){
+      if(!historyContainer) return;
+      const entries = getHistoryRows();
+      if(!entries.length){
+        historyContainer.innerHTML = '<div class="muted">Keine bestätigten Tipps vorhanden.</div>';
+        return;
+      }
+
+      historyContainer.innerHTML = entries.map(({row, index}) => {
+        if(row.editing){
+          return `
+            <div class="history-item">
+              <div class="history-head">
+                <div class="history-title">Bearbeite Eintrag</div>
+              </div>
+              <div class="history-edit">
+                <label>Name<br><input data-index="${index}" data-field="person" value="${escapeHtml(row.editBuffer.person)}"></label>
+                ${row.editBuffer.tips.map((tip, tipIndex) => `
+                  <label>Tipp ${tipIndex + 1}<br><input data-index="${index}" data-field="editTip${tipIndex}" type="number" step="any" value="${escapeHtml(tip)}"></label>
+                `).join('')}
+              </div>
+              <div class="history-controls">
+                <button class="btn secondary" data-action="save" data-index="${index}">Speichern</button>
+                <button class="btn secondary" data-action="cancel" data-index="${index}">Abbrechen</button>
+                <button class="btn danger" data-action="delete" data-index="${index}">Löschen</button>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="history-item">
+            <div class="history-head">
+              <div class="history-title">${escapeHtml(row.person)}</div>
+              <div class="history-controls">
+                <button class="btn secondary" data-action="edit" data-index="${index}">Bearbeiten</button>
+                <button class="btn danger" data-action="delete" data-index="${index}">Löschen</button>
+              </div>
+            </div>
+            <div class="history-tips">
+              ${row.tips.filter(v => v !== '' && v !== null).map(tip => `<span class="history-tip">${escapeHtml(String(tip))}</span>`).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      historyContainer.querySelectorAll('button[data-action]').forEach(button => {
+        const action = button.dataset.action;
+        const index = Number(button.dataset.index);
+        button.addEventListener('click', () => {
+          if(action === 'edit') startEditRow(index);
+          if(action === 'delete') deleteRow(index);
+          if(action === 'save') saveEditRow(index);
+          if(action === 'cancel') cancelEditRow(index);
+        });
+      });
+
+      historyContainer.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', () => {
+          const index = Number(input.dataset.index);
+          const field = input.dataset.field;
+          const row = state.guesses[index];
+          if(!row || !row.editBuffer) return;
+
+          if(field === 'person'){
+            row.editBuffer.person = input.value;
+          } else if(field.startsWith('editTip')){
+            const tipIndex = Number(field.slice(7));
+            row.editBuffer.tips[tipIndex] = input.value;
+          }
+        });
+      });
     }
 
     function collectRows(){
@@ -590,6 +796,7 @@
         state.result = parsed.result ?? null;
         resultEl.value = state.result ?? '';
         renderRows();
+        renderHistory();
         statusBox.innerHTML = '<span class="ok">Geladen.</span>';
       }catch(e){
         statusBox.innerHTML = '<span class="bad">Speicherinhalt ist ungültig.</span>';
@@ -601,6 +808,7 @@
       state = { guesses: [], result: null };
       resultEl.value = '';
       renderRows();
+      renderHistory();
       rankingContainer.innerHTML = '';
       statusBox.textContent = 'Zurückgesetzt.';
       localStorage.removeItem(getStorageKey());
