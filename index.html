@@ -521,7 +521,9 @@
     };
 
     function safeNumber(v){
-      const n = Number(v);
+      const raw = String(v).trim();
+      if(raw === '') return null;
+      const n = Number(raw);
       return Number.isFinite(n) ? n : null;
     }
 
