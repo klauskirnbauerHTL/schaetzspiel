@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Schätzspiel</title>
+  <style>
+    :root{
+      --bg:#f7f7fb;
+      --card:#fff;
+      --text:#1f2430;
+      --muted:#667085;
+      --primary:#2563eb;
+      --border:#d0d5dd;
+      --ok:#067647;
+      --bad:#b42318;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+
+    .wrap{
+      max-width:1200px;
+      margin:0 auto;
+      padding:24px;
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size:28px;
+    }
+
+    p{
+      margin:0 0 16px;
+      color:var(--muted);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:16px;
+    }
+
+    @media(min-width:1100px){
+      .grid{
+        grid-template-columns:1.35fr .95fr;
+      }
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      box-shadow:0 1px 2px rgba(16,24,40,.04);
+    }
+
+    h2{
+      margin:0 0 12px;
+      font-size:20px;
+    }
+
+    .toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:12px;
+      margin-bottom:12px;
+    }
+
+    .btn{
+      border:0;
+      border-radius:10px;
+      padding:10px 14px;
+      cursor:pointer;
+      font-weight:600;
+      font:inherit;
+      background:var(--primary);
+      color:#fff;
+    }
+
+    .btn.secondary{
+      background:#e5e7eb;
+      color:#111827;
+    }
+
+    .btn.danger{
+      background:#fee4e2;
+      color:#7a271a;
+    }
+
+    .table-wrap{
+      overflow-x:auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    table{
+      width:100%;
+      border-collapse:collapse;
+      margin-top:12px;
+      min-width:100%;
+    }
+
+    th,td{
+      padding:10px 8px;
+      border-bottom:1px solid var(--border);
+      text-align:left;
+      vertical-align:top;
+    }
+
+    th, td {
+      white-space: nowrap;
+    }
+
+    @media(max-width:900px){
+      .wrap{
+        padding:16px;
+      }
+
+      .card{
+        padding:14px;
+      }
+
+      .table-wrap{
+        margin-bottom:12px;
+      }
+
+      table{
+        min-width:720px;
+      }
+
+      th, td{
+        padding:8px 6px;
+      }
+
+      input{
+        padding:8px 10px;
+      }
+    }
+
+    @media(max-width:640px){
+      .grid{
+        gap:12px;
+      }
+
+      .topbar{
+        gap:8px;
+      }
+
+      .toolbar{
+        gap:8px;
+      }
+
+      input{
+        padding:8px 10px;
+      }
+
+      button{
+        width:100%;
+      }
+
+      table{
+        border:0;
+        min-width:auto;
+      }
+
+      thead{
+        border:0;
+        clip: rect(0 0 0 0);
+        height:1px;
+        margin:-1px;
+        overflow:hidden;
+        padding:0;
+        position:absolute;
+        width:1px;
+      }
+
+      tbody, tr{
+        display:block;
+        width:100%;
+      }
+
+      tr{
+        margin-bottom:12px;
+        border:1px solid var(--border);
+        border-radius:16px;
+        padding:10px;
+      }
+
+      td{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        width:100%;
+        padding:8px 0;
+        border:none;
+        border-bottom:1px solid var(--border);
+        white-space:normal;
+      }
+
+      td:last-child{
+        border-bottom:none;
+      }
+
+      td::before{
+        content: attr(data-label);
+        font-weight:700;
+        color:var(--muted);
+        flex:0 0 40%;
+        margin-right:10px;
+      }
+
+      td[data-label="Aktion"]{
+        display:block;
+      }
+
+      td[data-label="Aktion"] button{
+        width:100%;
+        margin-top:8px;
+      }
+
+      td input{
+        width:60%;
+      }
+    }
+
+    th{
+      font-size:13px;
+      color:var(--muted);
+      background:#fafafa;
+    }
+
+    input,button{
+      font:inherit;
+    }
+
+    input{
+      width:100%;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:10px 12px;
+      background:#fff;
+      color:var(--text);
+    }
+
+    input:disabled{
+      background:#f4f5f7;
+      color:#6b7280;
+      cursor:not-allowed;
+    }
+
+    .status{
+      margin-top:12px;
+      padding:12px;
+      border-radius:12px;
+      background:#f9fafb;
+      border:1px solid var(--border);
+    }
+
+    .ok{color:var(--ok);font-weight:700}
+    .bad{color:var(--bad);font-weight:700}
+    .muted{color:var(--muted)}
+
+    .chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:8px;
+      margin-bottom:8px;
+    }
+
+    .chip{
+      padding:6px 10px;
+      background:#eef4ff;
+      border-radius:999px;
+      font-size:13px;
+    }
+
+    .topbar{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-bottom:12px;
+    }
+
+    @media(min-width:700px){
+      .topbar{
+        grid-template-columns:2fr 1fr 1fr;
+      }
+    }
+
+    .mini-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:10px;
+      margin-bottom:16px;
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns:1.3fr 1fr 1fr 1fr;
+      gap:8px;
+      align-items:end;
+      margin-bottom:8px;
+    }
+
+    .row.header{
+      font-size:13px;
+      color:var(--muted);
+      font-weight:700;
+      margin-bottom:6px;
+    }
+
+    .row .field label{
+      display:block;
+      font-size:13px;
+      font-weight:600;
+      margin-bottom:6px;
+    }
+
+    .row .field input{
+      padding:9px 10px;
+      border-radius:9px;
+    }
+
+    .row .field span{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .legend{
+      margin-top:10px;
+      font-size:13px;
+      color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Schätzspiel</h1>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Tipps erfassen</h2>
+
+        <div class="topbar">
+          <div>
+            <label for="storageKey"><strong>Speichername</strong></label>
+            <input id="storageKey" value="schaetzspiel-data" />
+          </div>
+          <div>
+            <label for="rankingSize"><strong>Ranking-Größe</strong></label>
+            <input id="rankingSize" type="number" min="1" value="10" />
+          </div>
+          <div class="toolbar" style="align-items:end;margin:0">
+            <button class="btn secondary" id="saveBtn">Speichern</button>
+            <button class="btn secondary" id="loadBtn">Laden</button>
+            <button class="btn danger" id="resetBtn">Löschen</button>
+          </div>
+        </div>
+
+        <div class="legend">
+          Es erscheint immer nur eine aktive Eingabezeile. Erst wenn die aktuelle Person bestätigt ist, erscheint die nächste.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:180px">Person</th>
+                <th colspan="5">Tipps</th>
+                <th style="width:130px">Aktion</th>
+              </tr>
+              <tr>
+                <th></th>
+                <th style="width:90px">Tipp 1</th>
+                <th style="width:90px">Tipp 2</th>
+                <th style="width:90px">Tipp 3</th>
+                <th style="width:90px">Tipp 4</th>
+                <th style="width:90px">Tipp 5</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="guessRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Ergebnis & Auswertung</h2>
+
+        <div class="mini-grid">
+          <div>
+            <label for="result"><strong>Ergebnis</strong></label>
+            <input id="result" type="number" step="any" placeholder="Endergebnis eingeben" />
+          </div>
+
+        </div>
+
+        <div class="toolbar">
+          <button class="btn" id="evaluateBtn">Tippspiel auswerten</button>
+          <button class="btn secondary" id="exportBtn">JSON exportieren</button>
+        </div>
+
+        <div class="status" id="statusBox">Noch keine Auswertung.</div>
+        <div id="rankingContainer"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_DEFAULT = 'schaetzspiel-data';
+
+    const storageKeyEl = document.getElementById('storageKey');
+    const rankingSizeEl = document.getElementById('rankingSize');
+    const resultEl = document.getElementById('result');
+    const statusBox = document.getElementById('statusBox');
+    const rankingContainer = document.getElementById('rankingContainer');
+    const guessRowsEl = document.getElementById('guessRows');
+
+    const rowCount = 10;
+    const tipCount = 5;
+
+    let state = {
+      guesses: [],
+      result: null
+    };
+
+    function safeNumber(v){
+      const n = Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"]/g, m => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;'
+      }[m]));
+    }
+
+    function defaultRow(i){
+      return {
+        person: '',
+        tips: Array.from({length: tipCount}, () => ''),
+        confirmed: false
+      };
+    }
+
+    function normalizeState(raw){
+      const base = { guesses: [], result: null };
+      if(!raw || typeof raw !== 'object') return base;
+      base.result = raw.result ?? null;
+      base.guesses = Array.isArray(raw.guesses) ? raw.guesses.map(row => ({
+        person: row.person || '',
+        tips: Array.isArray(row.tips) ? [...row.tips, ...Array.from({length: Math.max(0, tipCount - row.tips.length)}, () => '')].slice(0, tipCount) : Array.from({length: tipCount}, () => ''),
+        confirmed: !!row.confirmed
+      })) : [];
+      return base;
+    }
+
+    function getStorageKey(){
+      return storageKeyEl.value.trim() || STORAGE_DEFAULT;
+    }
+
+    function getActiveRowIndex(){
+      const next = state.guesses.findIndex(row => !row.confirmed);
+      if(next !== -1) return next;
+      return state.guesses.length < rowCount ? state.guesses.length : null;
+    }
+
+    function renderRows(){
+      const active = getActiveRowIndex();
+      if(active === null){
+        guessRowsEl.innerHTML = `<tr><td colspan="7" class="muted">Alle Personen sind bestätigt.</td></tr>`;
+        return;
+      }
+
+      const g = state.guesses[active] || defaultRow(active);
+      const rows = [`
+        <tr>
+          <td data-label="Person">
+            <input data-index="${active}" data-field="person" placeholder="Name" value="${escapeHtml(g.person || '')}">
+          </td>
+          ${Array.from({length: tipCount}, (_, tipIndex) => `
+            <td data-label="Tipp ${tipIndex + 1}">
+              <input data-index="${active}" data-field="tip${tipIndex}" type="number" step="any" placeholder="Tipp ${tipIndex + 1}" value="${escapeHtml(g.tips?.[tipIndex] ?? '')}">
+            </td>
+          `).join('')}
+          <td data-label="Aktion">
+            <button class="btn secondary" data-index="${active}">Bestätigen</button>
+          </td>
+        </tr>
+      `];
+
+      guessRowsEl.innerHTML = rows.join('');
+
+      guessRowsEl.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', () => {
+          const i = Number(input.dataset.index);
+          const field = input.dataset.field;
+          if(!state.guesses[i]) state.guesses[i] = defaultRow(i);
+
+          if(field === 'person'){
+            state.guesses[i].person = input.value.trim();
+          } else if(field.startsWith('tip')){
+            const tipIndex = Number(field.slice(3));
+            state.guesses[i].tips[tipIndex] = input.value;
+          }
+
+          autoSave();
+        });
+      });
+
+      guessRowsEl.querySelectorAll('button[data-index]').forEach(button => {
+        button.addEventListener('click', () => {
+          const i = Number(button.dataset.index);
+          confirmRow(i);
+        });
+      });
+    }
+
+    function validateRow(row){
+      const person = (row.person || '').trim();
+      const numbers = Array.isArray(row.tips) ? row.tips.map(v => safeNumber(v)).filter(v => v !== null) : [];
+      return person && numbers.length > 0;
+    }
+
+    function confirmRow(index){
+      const row = state.guesses[index] || defaultRow(index);
+      if(!validateRow(row)){
+        alert('Bitte gib einen Namen und mindestens einen Tipp ein, bevor du bestätigst.');
+        return;
+      }
+      row.confirmed = true;
+      state.guesses[index] = row;
+      autoSave();
+      renderRows();
+    }
+
+    function collectRows(){
+      const rows = [];
+      for(const row of state.guesses){
+        if(!row.confirmed) continue;
+        const person = (row.person || '').trim();
+        const tips = Array.isArray(row.tips) ? row.tips : [];
+        const numbers = tips
+          .map(v => safeNumber(v))
+          .filter(v => v !== null);
+
+        if(person && numbers.length){
+          rows.push({
+            person,
+            tips: numbers
+          });
+        }
+      }
+      return rows;
+    }
+
+    function autoSave(){
+      localStorage.setItem(getStorageKey(), JSON.stringify({
+        guesses: state.guesses,
+        result: state.result
+      }));
+    }
+
+    function save(){
+      autoSave();
+      statusBox.innerHTML = '<span class="ok">Gespeichert.</span>';
+    }
+
+    function load(){
+      const raw = localStorage.getItem(getStorageKey());
+      if(!raw){
+        statusBox.innerHTML = '<span class="bad">Keine gespeicherten Daten gefunden.</span>';
+        return;
+      }
+
+      try{
+        const parsed = normalizeState(JSON.parse(raw));
+        state.guesses = Array.isArray(parsed.guesses) ? parsed.guesses : [];
+        state.result = parsed.result ?? null;
+        resultEl.value = state.result ?? '';
+        renderRows();
+        statusBox.innerHTML = '<span class="ok">Geladen.</span>';
+      }catch(e){
+        statusBox.innerHTML = '<span class="bad">Speicherinhalt ist ungültig.</span>';
+      }
+    }
+
+    function resetAll(){
+      if(!confirm('Alle Daten löschen?')) return;
+      state = { guesses: [], result: null };
+      resultEl.value = '';
+      renderRows();
+      rankingContainer.innerHTML = '';
+      statusBox.textContent = 'Zurückgesetzt.';
+      localStorage.removeItem(getStorageKey());
+    }
+
+    function evaluate(){
+      const result = safeNumber(resultEl.value);
+      if(result === null){
+        alert('Bitte ein gültiges Ergebnis eingeben.');
+        return;
+      }
+
+      state.result = result;
+      const size = Math.max(1, parseInt(rankingSizeEl.value || '10', 10));
+
+      const rows = collectRows()
+        .flatMap((g, idx) => g.tips.map((tip, tipIndex) => ({
+          person: g.person,
+          label: `Tipp ${tipIndex + 1}`,
+          value: tip,
+          diff: Math.abs(tip - result),
+          sourceIndex: idx
+        })))
+        .sort((a, b) => a.diff - b.diff || a.value - b.value);
+
+      const top = rows.slice(0, size);
+
+      statusBox.innerHTML = `
+        <div><strong>Ergebnis:</strong> ${escapeHtml(String(result))}</div>
+        <div><strong>Ranking-Größe:</strong> ${size}</div>
+        <div><strong>Tipps gesamt:</strong> ${rows.length}</div>
+      `;
+
+      rankingContainer.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Platz</th>
+              <th>Person</th>
+              <th>Tipp</th>
+              <th>Wert</th>
+              <th>Abweichung</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              top.length
+                ? top.map((r, i) => `
+                    <tr>
+                      <td>${i + 1}</td>
+                      <td>${escapeHtml(r.person)}</td>
+                      <td>${escapeHtml(r.label)}</td>
+                      <td>${r.value}</td>
+                      <td>${r.diff}</td>
+                    </tr>
+                  `).join('')
+                : '<tr><td colspan="5" class="muted">Keine Tipps vorhanden.</td></tr>'
+            }
+          </tbody>
+        </table>
+      `;
+
+      save();
+    }
+
+    function exportJson(){
+      const blob = new Blob([JSON.stringify({
+        guesses: state.guesses,
+        result: state.result
+      }, null, 2)], {type:'application/json'});
+
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'schaetzspiel.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    document.getElementById('saveBtn').onclick = save;
+    document.getElementById('loadBtn').onclick = load;
+    document.getElementById('resetBtn').onclick = resetAll;
+    document.getElementById('evaluateBtn').onclick = evaluate;
+    document.getElementById('exportBtn').onclick = exportJson;
+
+    resultEl.addEventListener('input', () => {
+      state.result = resultEl.value;
+      autoSave();
+    });
+
+    rankingSizeEl.addEventListener('change', () => {
+      autoSave();
+    });
+
+    storageKeyEl.addEventListener('change', () => {
+      autoSave();
+    });
+
+    renderRows();
+
+    try{
+      load();
+    }catch(e){}
+  </script>
+</body>
+</html>
