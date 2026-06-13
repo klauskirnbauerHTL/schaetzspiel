@@ -56,6 +56,27 @@ p{
   margin:0 auto;
 }
 
+.danger-details{
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#fafafa;
+  padding:10px 12px;
+}
+
+.danger-details summary{
+  cursor:pointer;
+  font-weight:700;
+  list-style:none;
+}
+
+.danger-details summary::-webkit-details-marker{
+  display:none;
+}
+
+.danger-details[open] summary{
+  margin-bottom:4px;
+}
+
 @media(min-width:1100px){
   .grid > .card:first-child{
     flex:1 1 57%;
